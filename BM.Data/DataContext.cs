@@ -1,4 +1,5 @@
 ﻿using BM.Core.Model;
+using BM.Data.Configurations;
 using Microsoft.EntityFrameworkCore;
 
 namespace BM.Data
@@ -16,5 +17,10 @@ namespace BM.Data
         }
 
         public DbSet<Book> Books { get; set; }
+
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            modelBuilder.ApplyConfiguration(new BookConfiguration());
+        }
     }
 }
