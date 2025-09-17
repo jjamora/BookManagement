@@ -36,7 +36,8 @@ app.MapGet("/api/books", async (IServiceManager services) =>
     try
     {
         //get all books
-        return Results.Ok(await services.BookServices.GetAllBooks()!);
+        List<Book> list = [..await services.BookServices.GetAllBooks()];
+        return Results.Ok(list);
     }
     catch (Exception)
     {
