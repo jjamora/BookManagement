@@ -1,3 +1,4 @@
+using BM.Core.Model;
 using BM.Core.Repositories;
 using BM.Data;
 using BM.Data.Repositories;
@@ -20,7 +21,8 @@ builder.Services.AddControllers();
 //builder.Services.AddOpenApi();
 
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen(options => {
+builder.Services.AddSwaggerGen(options =>
+{
     options.ResolveConflictingActions(apiDescriptions => apiDescriptions.First());
     options.IgnoreObsoleteActions();
     options.IgnoreObsoleteProperties();
@@ -28,6 +30,46 @@ builder.Services.AddSwaggerGen(options => {
 });
 
 var app = builder.Build();
+
+app.MapGet("/api/books", async (IServiceManager services) =>
+{
+    try
+    {
+        //get all books
+        return Results.Ok(await services.BookServices.GetAllBooks()!);
+    }
+    catch (Exception)
+    {
+        return Results.StatusCode(StatusCodes.Status500InternalServerError);
+    }
+});
+
+app.MapGet("api/books/{id}", async (int id, IServiceManager services) =>
+{
+    try
+    {
+        return Results.Ok(await services.BookServices.GetBookById(id));
+    }
+    catch (Exception)
+    {
+        return Results.StatusCode(StatusCodes.Status500InternalServerError);
+    }
+});
+
+app.MapPost("/api/books", async (Book book, IServiceManager services) =>
+{
+    try
+    {
+        if (book == null) return Results.BadRequest();
+        await services.BookServices.AddBook(book!);
+
+        return Results.Ok(book);
+    }
+    catch (Exception)
+    {
+        return Results.StatusCode(StatusCodes.Status500InternalServerError);
+    }
+});
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
@@ -37,8 +79,11 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-app.UseCors(options => { options.AllowAnyHeader()
-    .AllowAnyOrigin().AllowAnyMethod(); });
+app.UseCors(options =>
+{
+    options.AllowAnyHeader()
+    .AllowAnyOrigin().AllowAnyMethod();
+});
 app.UseAuthorization();
 
 app.MapControllers();
