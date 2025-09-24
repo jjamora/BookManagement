@@ -1,9 +1,10 @@
-using BM.Core.Model;
+using BM.Core.DTO;
 using BM.Core.Repositories;
 using BM.Data;
 using BM.Data.Repositories;
 using BM.Services;
 using Microsoft.EntityFrameworkCore;
+using System.Threading.RateLimiting;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -29,15 +30,25 @@ builder.Services.AddSwaggerGen(options =>
     options.CustomSchemaIds(type => type.FullName);
 });
 
+builder.Services.AddRateLimiter(options =>
+{
+    options.GlobalLimiter = PartitionedRateLimiter.Create<HttpContext, string>(httpContext =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            partitionKey: httpContext.User.Identity?.Name ?? "anonymous",
+            factory: _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 10,
+                Window = TimeSpan.FromMinutes(1)
+            }));
+});
+
 var app = builder.Build();
 
 app.MapGet("/api/books", async (IServiceManager services) =>
 {
     try
     {
-        //get all books
-        List<Book> list = [..await services.BookServices.GetAllBooks()];
-        return Results.Ok(list);
+        return Results.Ok(services.BookServices.GetAllBooks());
     }
     catch (Exception)
     {
@@ -57,14 +68,14 @@ app.MapGet("api/books/{id}", async (int id, IServiceManager services) =>
     }
 });
 
-app.MapPost("/api/books", async (Book book, IServiceManager services) =>
+app.MapPost("/api/books", async (BookDTO dto, IServiceManager services) =>
 {
     try
     {
-        if (book == null) return Results.BadRequest();
-        await services.BookServices.AddBook(book!);
+        if (dto == null) return Results.BadRequest();
+        await services.BookServices.AddBook(dto!);
 
-        return Results.Ok(book);
+        return Results.Ok(dto);
     }
     catch (Exception)
     {

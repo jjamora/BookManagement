@@ -1,13 +1,14 @@
-﻿using BM.Core.Model;
+﻿using BM.Core.DTO;
+using BM.Core.Mapper;
 using BM.Core.Repositories;
 
 namespace BM.Services
 {
     public interface IBookServices
     {
-        Task<IEnumerable<Book>> GetAllBooks();
-        Task<Book> GetBookById(int id);
-        Task AddBook(Book book);
+        Task<IEnumerable<BookDTO>> GetAllBooks();
+        Task<BookDTO> GetBookById(int id);
+        Task AddBook(BookDTO book);
     }
 
     public class BookServices(IRepositoryManager repository) : IBookServices
@@ -15,20 +16,22 @@ namespace BM.Services
         private readonly IRepositoryManager repository =
             repository ?? throw new ArgumentNullException(nameof(repository));
 
-        public async Task AddBook(Book book)
+        public async Task AddBook(BookDTO book)
         {
-            await repository.BookRepository.AddAsync(book);
+            await repository.BookRepository.AddAsync(book.DtoToModel());
             await repository.CommitAsync();
         }
 
-        public async Task<IEnumerable<Book>> GetAllBooks()
+        public async Task<IEnumerable<BookDTO>> GetAllBooks()
         {
-            return await repository.BookRepository.GetAllBooks();
+            var list = await repository.BookRepository.GetAllBooks();
+            return list.Select(o => o.ModelToDTO());
         }
 
-        public async Task<Book> GetBookById(int id)
+        public async Task<BookDTO> GetBookById(int id)
         {
-            return await repository.BookRepository.GetBookById(id);
+            var result = await repository.BookRepository.GetBookById(id);
+            return result.ModelToDTO();
         }
     }
 }

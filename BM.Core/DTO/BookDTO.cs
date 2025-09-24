@@ -1,6 +1,6 @@
-﻿namespace BM.Core.Model
+﻿namespace BM.Core.DTO
 {
-    public class Book
+    public class BookDTO
     {
         public Guid Id { get; set; }
         public required string Title { get; set; }
