@@ -48,7 +48,7 @@ app.MapGet("/api/books", async (IServiceManager services) =>
 {
     try
     {
-        return Results.Ok(services.BookServices.GetAllBooks());
+        return Results.Ok(await services.BookServices.GetAllBooks());
     }
     catch (Exception)
     {
